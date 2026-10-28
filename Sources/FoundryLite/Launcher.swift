@@ -9,6 +9,12 @@ final class LauncherWindowController: NSWindowController, NSWindowDelegate, NSTa
     private let nameField = NSTextField()
     private let urlField = NSTextField()
     private let table = NSTableView()
+    private let updateButton = NSButton(title: "Проверить обновления", target: nil, action: nil)
+
+    func setUpdateButton(title: String, enabled: Bool = true) {
+        updateButton.title = title
+        updateButton.isEnabled = enabled
+    }
 
     init(store: ServerStore, onConnect: @escaping (Server) -> Void, onClose: @escaping () -> Void) {
         self.store = store
@@ -61,11 +67,22 @@ final class LauncherWindowController: NSWindowController, NSWindowDelegate, NSTa
         let buttons = NSStackView(views: [
             NSButton(title: "Удалить", target: self, action: #selector(removeSelected)),
             spacer,
+            NSButton(title: "Добавить", target: self, action: #selector(add)),
             NSButton(title: "Сохранить", target: self, action: #selector(save)),
             connectButton,
         ])
 
-        let stack = NSStackView(views: [nameField, urlField, scroll, buttons])
+        let version = NSTextField(labelWithString: "Версия \(Updater.currentVersion)")
+        version.textColor = .secondaryLabelColor
+        version.font = .systemFont(ofSize: 11)
+        updateButton.bezelStyle = .inline
+        updateButton.target = nil
+        updateButton.action = #selector(AppDelegate.checkForUpdates(_:))
+        let footerSpacer = NSView()
+        footerSpacer.setContentHuggingPriority(NSLayoutConstraint.Priority(1), for: .horizontal)
+        let footer = NSStackView(views: [version, footerSpacer, updateButton])
+
+        let stack = NSStackView(views: [nameField, urlField, scroll, buttons, footer])
         stack.orientation = .vertical
         stack.alignment = .width
         stack.spacing = 10
@@ -97,7 +114,7 @@ final class LauncherWindowController: NSWindowController, NSWindowDelegate, NSTa
             return nil
         }
         let typed = nameField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-        return Server(name: typed.isEmpty ? (url.host ?? url.absoluteString) : typed, url: url.absoluteString)
+        return Server(name: typed, url: url.absoluteString)
     }
 
     @objc private func connect() {
@@ -109,17 +126,28 @@ final class LauncherWindowController: NSWindowController, NSWindowDelegate, NSTa
         onConnect(store.servers[table.clickedRow])
     }
 
+    /// Обновляет выбранную строку; без выбора добавляет новую
     @objc private func save() {
         guard let server = currentServer() else { return }
         let row = table.selectedRow
         if row >= 0 {
             store.update(at: row, server)
+            table.reloadData()
+            table.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
         } else {
-            store.add(server)
+            addNew(server)
         }
+    }
+
+    /// Всегда создаёт новую запись, не трогая выбранную в списке
+    @objc private func add() {
+        if let server = currentServer() { addNew(server) }
+    }
+
+    private func addNew(_ server: Server) {
+        store.add(server)
         table.reloadData()
-        let target = row >= 0 ? row : store.servers.count - 1
-        table.selectRowIndexes(IndexSet(integer: target), byExtendingSelection: false)
+        table.selectRowIndexes(IndexSet(integer: store.servers.count - 1), byExtendingSelection: false)
     }
 
     @objc private func removeSelected() {
@@ -137,13 +165,13 @@ final class LauncherWindowController: NSWindowController, NSWindowDelegate, NSTa
 
     func tableView(_ tableView: NSTableView, objectValueFor tableColumn: NSTableColumn?, row: Int) -> Any? {
         let s = store.servers[row]
-        return tableColumn?.identifier.rawValue == "name" ? s.name : s.url
+        return tableColumn?.identifier.rawValue == "name" ? s.displayName : s.url
     }
 
     func tableViewSelectionDidChange(_ notification: Notification) {
         let row = table.selectedRow
         guard row >= 0 else { return }
-        nameField.stringValue = store.servers[row].name
+        nameField.stringValue = store.servers[row].customName ?? ""
         urlField.stringValue = store.servers[row].url
     }
 }

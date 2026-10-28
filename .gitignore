@@ -2,3 +2,5 @@
 *.app
 *.dmg
 .DS_Store
+dmgroot
+*.zip

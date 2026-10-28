@@ -2,6 +2,7 @@
 # Собирает Foundry Lite.app рядом со скриптом
 set -e
 cd "$(dirname "$0")"
+VERSION="${VERSION:-1.0}"
 swift build -c release
 APP="Foundry Lite.app"
 rm -rf "$APP"
@@ -27,7 +28,7 @@ cat > "$APP/Contents/Info.plist" <<PL
 <key>CFBundleExecutable</key><string>FoundryLite</string>
 <key>CFBundleIconFile</key><string>AppIcon</string>
 <key>CFBundlePackageType</key><string>APPL</string>
-<key>CFBundleShortVersionString</key><string>1.0</string>
+<key>CFBundleShortVersionString</key><string>$VERSION</string>
 <key>CFBundleVersion</key><string>1</string>
 <key>LSMinimumSystemVersion</key><string>14.0</string>
 <key>NSHighResolutionCapable</key><true/>

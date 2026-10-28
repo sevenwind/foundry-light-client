@@ -4,6 +4,16 @@ struct Server: Codable, Equatable {
     var name: String
     var url: String
 
+    /// Имя, введённое пользователем. Пустое или совпадающее с хостом считается незаданным
+    var customName: String? {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let host = normalizedURL(url)?.host
+        return trimmed.isEmpty || trimmed == host ? nil : trimmed
+    }
+
+    /// Для списка и заголовка до загрузки страницы
+    var displayName: String { customName ?? normalizedURL(url)?.host ?? url }
+
     /// Ключ для настроек окна и зума: один и тот же сервер, сохранённый или нет
     var key: String {
         guard let u = normalizedURL(url) else { return url }

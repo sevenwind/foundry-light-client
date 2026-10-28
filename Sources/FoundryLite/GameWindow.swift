@@ -29,7 +29,7 @@ final class GameWindowController: NSWindowController, NSWindowDelegate, WKNaviga
         let win = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1280, height: 800),
                            styleMask: [.titled, .closable, .miniaturizable, .resizable],
                            backing: .buffered, defer: false)
-        win.title = server.name
+        win.title = server.displayName
         win.minSize = NSSize(width: 640, height: 400)
         win.backgroundColor = dark
         win.collectionBehavior = [.fullScreenPrimary]
@@ -50,7 +50,9 @@ final class GameWindowController: NSWindowController, NSWindowDelegate, WKNaviga
         webView.uiDelegate = self
         titleObservation = webView.observe(\.title) { [weak self] wv, _ in
             guard let self else { return }
-            window?.title = (wv.title?.isEmpty == false ? wv.title : nil) ?? self.server.name
+            // Введённое имя главнее; иначе показываем название мира со страницы
+            let pageTitle = wv.title?.isEmpty == false ? wv.title : nil
+            window?.title = self.server.customName ?? pageTitle ?? self.server.displayName
         }
         webView.load(URLRequest(url: url))
     }

@@ -19,6 +19,8 @@ enum MainMenu {
         }
 
         _ = submenu("Foundry Lite", [
+            item("Проверить обновления…", #selector(AppDelegate.checkForUpdates(_:))),
+            .separator(),
             item("Скрыть Foundry Lite", #selector(NSApplication.hide(_:)), "h"),
             item("Скрыть остальные", #selector(NSApplication.hideOtherApplications(_:)), "h", [.command, .option]),
             .separator(),
